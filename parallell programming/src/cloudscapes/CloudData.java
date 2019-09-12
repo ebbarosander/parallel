@@ -12,19 +12,20 @@ import java.util.concurrent.ForkJoinPool;
 public class CloudData {
 
 	MyVector [][][] advection;// in-plane regular grid of wind vectors, that evolve over time
-	MyVector wind= new MyVector(); 
+	MyVector wind= new MyVector(); // class that contains two floats, x and y
 	float [][][] convection; // vertical air movement strength, that evolves over time
 	int [][][] classification; // cloud type per grid point, evolving over time
 	int dimx, dimy, dimt; // data dimensions
-	int dim=0;
-	static long startTime=0;
-	float time=0;
+	int dim=0; //=dim();
+	static long startTime=0; //used to store start time of timing
+	float time=0; //used to store stop time- start time/ time taken to perform measured task
 	static final ForkJoinPool fjPool = new ForkJoinPool();
 	
-	  float [] arrX;
-	  float [] arrY;
-	  int [] arrtot;
-	  int position=0;
+	  float [] arrX;//filled with all x value after readdata method is called upon
+	  float [] arrY;//filled with all y value after readdata method is called upon
+	  int [] arrtot;//filled with all values after readdata method is called upon
+	  int position=0; //Keeps track on were in the array the elements should be added to
+	  
 	// overall number of elements in the timeline grids
 	int dim(){
 		return dimt*dimx*dimy;
@@ -85,46 +86,40 @@ public class CloudData {
 		}
 	}
 	
-	// write classification output to file	
+	// saves start time
 	private static void tick(){
 		startTime = System.currentTimeMillis();
 	}
+	//returns stop time-start time
 	private static float tock(){
 		return (System.currentTimeMillis() - startTime) / 1000.0f; 
 	}
-
+    //starts compute in SumArr class
 	static Float sum(float[] arr){
 	  return fjPool.invoke(new SumArr(arr,0,arr.length));
 	}
-	
+	//starts compute in SumMatrix class
 	static int[] calculateConvection(MyVector[][][] advection, float [][][] convection,int l, int dim, int dimx, int dimy){
 		  return fjPool.invoke(new SumMatrix(advection ,convection, 0, dim ,dimx, dimy));
 		}
 
-
+    //Calculates wind and convection. Is either calling on sequential algorithm or parallel algorithm
 	public void calculate() {
+		
 		tick();
-	
-		
-		for(int i=0; i<10; i++) {
-		calculateSequentialWind();
-		//calculateParallelWind();
-		}
+	    //calculateSequentialWind();
+		calculateParallelWind();	
 		time=tock();
-		System.out.println("Calculation time for wind was " + time + " seconds" );	
+		
+		
 		tick();
-		for(int i=0; i<10; i++) {
-		calculateSequentialConvection();
-		
-		//calculateParallelConvection();
-		}
-		
+		//calculateSequentialConvection();
+		calculateParallelConvection();	
 		time=tock();
-		System.out.println("Calculation time for convection was " + time/10 + " seconds" );
 		
 				}
 		
-
+	//returns index of neighbor right or below if existing
 	private int higher(int position, int dimboundry) {
 		if(position+1==dimboundry) {
 			return position;
@@ -132,7 +127,7 @@ public class CloudData {
 			return (position+1);			
 		}
 	}
-
+	//returns index of neighbor left or above if existing
 	private int lower(int position) {		
 		if (position==0) {
 			return 0;
@@ -141,6 +136,7 @@ public class CloudData {
 		}
 	}
 	
+	//returns the length of a vector, where the vector is represented by one positions x and y values + its neighbors 
 	private float length(int t,int x, int y) {
 		float w=0;
 		float xvalue=0;
@@ -157,7 +153,7 @@ public class CloudData {
 		w= (float) Math.sqrt(Math.pow(xvalue/numberofpositions, 2) + Math.pow(yvalue/numberofpositions,2));
 		return w;
 	}
-
+    //calculates convection sequentially 
 	private void calculateSequentialConvection() {
 					
 					
@@ -174,7 +170,7 @@ public class CloudData {
 		} 
 		
 	}
-
+	//calculates wind sequentially
 	private void calculateSequentialWind() {
 		float xtotal =0;
 		float ytotal =0;
@@ -189,32 +185,33 @@ public class CloudData {
 	wind.y=ytotal/dim();
 		
 	}
-	
+	//calculates wind parallel
 	private void calculateParallelWind() {
 		wind.x=sum(arrX)/dim();
 		wind.y=sum(arrY)/dim();		
 	}
-
+	//calculates convection parallel
 	private void calculateParallelConvection() {
 		arrtot=calculateConvection(advection, convection,0,dim-1, dimx, dimy);
 	}
-
+	//writes result to file filename
 	void writeData(String fileName){
 		
 		 try{ 
 			 FileWriter fileWriter = new FileWriter(fileName);
 			 PrintWriter printWriter = new PrintWriter(fileWriter);
 			 printWriter.printf("%d %d %d\n", dimt, dimx, dimy);
-			 printWriter.printf("%f %f\n", wind.x, wind.y);
+			 printWriter.printf(Locale.US,"%f %f\n", wind.x, wind.y);
 			 
 			 //Sequential printout
-			 //for(int t = 0; t < dimt; t++){
-				// for(int x = 0; x < dimx; x++){
-					//for(int y = 0; y < dimy; y++){
-						//printWriter.printf("%d ", classification[t][x][y]);
-					//}
-				 //}
-			 //}
+//			 for(int t = 0; t < dimt; t++){
+//				 for(int x = 0; x < dimx; x++){
+//					for(int y = 0; y < dimy; y++){
+//						printWriter.printf("%d ", classification[t][x][y]);
+//					}
+//				 }
+//			 }
+			 
 
 			 
 			 //Parallel printout
@@ -237,6 +234,9 @@ public class CloudData {
 		 }
 	}
 }
+
+
+
 
 		
 	

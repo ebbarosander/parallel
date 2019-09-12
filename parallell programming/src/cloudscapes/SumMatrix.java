@@ -1,10 +1,10 @@
 package cloudscapes;
 
 import java.util.concurrent.RecursiveTask;
-
+//This class is used to calculate the convection with parallelization
 public class SumMatrix extends RecursiveTask<int[]>  {
 	
-	static final int SEQUENTIAL_CUTOFF=35000;
+	static final int SEQUENTIAL_CUTOFF=100000;
 	 float ans = 0; 
 	 int l;
 	 int h;
@@ -13,7 +13,8 @@ public class SumMatrix extends RecursiveTask<int[]>  {
 	 MyVector [][][] advection;
 	 float [][][] convection;
 	 int[] classification;
-	
+	 
+	//constructor of class
 	  SumMatrix(MyVector[][][] advection, float[][][] convection, int l, int h, int dimx, int dimy) { 
 		  	this.advection=advection;
 		  	this.convection=convection;
@@ -31,7 +32,7 @@ public class SumMatrix extends RecursiveTask<int[]>  {
 			ind[1] = (pos % (dimx*dimy)) / dimy; // x
 			ind[2] = pos % (dimy); // y
 	}
-	
+	//returns index of neighbor right or below if existing
 	private int higher(int position, int dimboundry) {
 		if(position+1==dimboundry) {
 			return position;
@@ -39,7 +40,7 @@ public class SumMatrix extends RecursiveTask<int[]>  {
 			return (position+1);			
 		}
 	}
-
+	//returns index of neighbor left or above if existing
 	private int lower(int position) {		
 		if (position==0) {
 			return 0;
@@ -47,7 +48,7 @@ public class SumMatrix extends RecursiveTask<int[]>  {
 			return (position-1);
 		}
 	}
-
+	//returns the length of a vector, where the vector is represented by one positions x and y values + its neighbors 
 	private float length(int t,int x, int y) {
 		float w=0;
 		float xvalue=0;
@@ -65,6 +66,7 @@ public class SumMatrix extends RecursiveTask<int[]>  {
 		return w;
 	}
 
+	 //calculates convection using several threads, divides the work if size off array is < sequential cutoff
 	 protected int[] compute(){
 		 int counter=0;
 		 
@@ -72,13 +74,13 @@ public class SumMatrix extends RecursiveTask<int[]>  {
 		 if((h-l) < SEQUENTIAL_CUTOFF) {
 			 int[] arrlo= new int[3];
 			 int[] arrhi= new int[3];
-	
+			
 			   locate(l, arrlo);
 			   locate(h, arrhi);
-			   
-				for(int t = arrlo[0]; t < arrhi[0]; t++)
-					for(int x = arrlo[1]; x < arrhi[1]; x++)
-						for(int y = arrlo[2]; y < arrhi[2]; y++){
+			
+				for(int t = arrlo[0]; t <= arrhi[0]; t++) {
+					for(int x = arrlo[1]; x <= arrhi[1]; x++) {
+						for(int y = arrlo[2]; y <= arrhi[2]; y++){
 							
 							
 							if(Math.abs(convection[t][x][y])>length(t,x,y)) { 
@@ -89,12 +91,13 @@ public class SumMatrix extends RecursiveTask<int[]>  {
 								classification[counter]=2;
 							}	
 							counter++;
-				} 
+				} }}
+				
 		      return classification;
 		      
 		  } else {
-			  SumMatrix left = new SumMatrix(advection, convection, l,(h+l)/2, dimx, dimy);
-			  SumMatrix right= new SumMatrix(advection, convection, (h+l)/2+1,h, dimx, dimy);
+			  SumMatrix left = new SumMatrix(advection, convection, l,((h+l)/2), dimx, dimy);
+			  SumMatrix right= new SumMatrix(advection, convection, ((h+l)/2)+1,h, dimx, dimy);
 			  left.fork();
 			  int[] rightAns = right.compute();
 			  int[] leftAns  = left.join();
