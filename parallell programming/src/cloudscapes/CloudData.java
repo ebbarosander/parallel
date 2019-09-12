@@ -8,7 +8,15 @@ import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.util.concurrent.ForkJoinPool;
 
-
+/**
+ * Class responsible for
+ * reading in input file
+ * contains methods that calculate sequential
+ * contains calls to class SumMatrix and SumArr
+ * write out to output file
+ * @author Ebba Rosander
+ *
+ */
 public class CloudData {
 
 	MyVector [][][] advection;// in-plane regular grid of wind vectors, that evolve over time

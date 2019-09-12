@@ -1,7 +1,12 @@
 package cloudscapes;
 
 import java.util.concurrent.RecursiveTask;
-//This class is used to calculate the convection with parallelization
+
+/**
+ * This class is used to calculate the convection with parallelization
+ * @author 46709
+ *
+ */
 public class SumMatrix extends RecursiveTask<int[]>  {
 	
 	static final int SEQUENTIAL_CUTOFF=100000;

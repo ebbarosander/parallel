@@ -1,7 +1,11 @@
 package cloudscapes;
 
 import java.util.concurrent.RecursiveTask;
-//This class is used to calculate the wind with parallelization
+/**
+ * This class is used to calculate the wind with parallelization
+ * @author Ebba Rosander
+ *
+ */
 public class SumArr extends RecursiveTask<Float>  {
 	  int      lo;
 	  int	   hi;
